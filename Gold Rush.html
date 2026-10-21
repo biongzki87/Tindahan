@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tindahan POS & Inventory Management</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons for crisp icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- Google Fonts: Inter & Outfit for modern look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <!-- Chart.js CDN for Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              yellow: '#FFB800',
+              orange: '#FF5722',
+              teal: '#00A896',
+              dark: '#1E293B',
+              lightBg: '#F8FAFC'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            heading: ['Outfit', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbar for quick grid & tables */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .badge-glow {
+      box-shadow: 0 0 8px rgba(255, 87, 34, 0.4);
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col selection:bg-brand-yellow selection:text-slate-900">
+
+  <!-- TOP HEADER -->
+  <header class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white border-b-4 border-brand-yellow sticky top-0 z-30 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      
+      <!-- Brand Logo / Title -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-orange to-brand-yellow flex items-center justify-center text-slate-900 font-extrabold text-2xl shadow-lg">
+            <i class="ph-bold ph-storefront"></i>
+          </div>
+          <div>
+            <h1 class="font-heading font-extrabold text-xl sm:text-2xl tracking-tight text-white flex items-center gap-2">
+              Tindahan <span class="text-brand-yellow">POS</span>
+            </h1>
+            <p class="text-xs text-slate-400">Sales, Inventory & Pautang System</p>
+          </div>
+        </div>
+
+        <!-- Mobile Revenue Badge -->
+        <div class="md:hidden flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
+          <i class="ph-bold ph-trend-up text-emerald-400"></i>
+          <div class="text-right">
+            <span class="block text-[10px] text-slate-400 uppercase leading-none">Today</span>
+            <span class="font-bold text-emerald-400 text-sm" id="header-sales-today-mobile">₱0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center gap-1 bg-slate-800/90 p-1.5 rounded-xl border border-slate-700/60 overflow-x-auto text-xs sm:text-sm font-medium">
+        <button onclick="switchTab('pos')" id="tab-btn-pos" class="tab-btn active-tab flex items-center gap-2 px-3.5 py-2 rounded-lg transition-all duration-200 bg-brand-yellow text-slate-900 font-bold shadow-sm">
+          <i class="ph-bold ph-shopping-cart text-base"></i>
+          <span>POS / Checkout</span>
+        </button>
+        <button onclick="switchTab('history')" id="tab-btn-history" class="tab-btn flex items-center gap-2 px-3.5 py-2 rounded-lg transition-all duration-200 text-slate-300 hover:text-white hover:bg-slate-700/50">
+          <i class="ph-bold ph-receipt text-base"></i>
+          <span>Sales History</span>
+        </button>
+        <button onclick="switchTab('inventory')" id="tab-btn-inventory" class="tab-btn flex items-center gap-2 px-3.5 py-2 rounded-lg transition-all duration-200 text-slate-300 hover:text-white hover:bg-slate-700/50">
+          <i class="ph-bold ph-package text-base"></i>
+          <span>Inventory</span>
+          <span id="low-stock-count-badge" class="hidden bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
+        </button>
+        <button onclick="switchTab('pautang')" id="tab-btn-pautang" class="tab-btn flex items-center gap-2 px-3.5 py-2 rounded-lg transition-all duration-200 text-slate-300 hover:text-white hover:bg-slate-700/50">
+          <i class="ph-bold ph-book-open-user text-base"></i>
+          <span>Pautang</span>
+        </button>
+        <button onclick="switchTab('analytics')" id="tab-btn-analytics" class="tab-btn flex items-center gap-2 px-3.5 py-2 rounded-lg transition-all duration-200 text-slate-300 hover:text-white hover:bg-slate-700/50">
+          <i class="ph-bold ph-chart-line-up text-base"></i>
+          <span>Reports</span>
+        </button>
+      </nav>
+
+      <!-- Desktop Metrics & Clock -->
+      <div class="hidden md:flex items-center gap-4">
+        <div class="bg-slate-800 px-3.5 py-1.5 rounded-xl border border-slate-700 flex items-center gap-3">
+          <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+            <i class="ph-bold ph-currency-circle-dollar text-xl"></i>
+          </div>
+          <div>
+            <span class="block text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Today's Revenue</span>
+            <span class="font-heading font-bold text-emerald-400 text-base" id="header-sales-today">₱0.00</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <div id="live-clock" class="font-heading font-bold text-sm text-slate-200">12:00:00 PM</div>
+          <div id="live-date" class="text-[11px] text-slate-400">Oct 21, 2026</div>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 lg:p-6 flex flex-col gap-6">
+
+    <!-- ==================== POS / CHECKOUT TAB ==================== -->
+    <section id="tab-pos" class="tab-content grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <!-- Left: Product Catalog & Search (lg:col-span-7 or 8) -->
+      <div class="lg:col-span-7 xl:col-span-8 flex flex-col gap-4">
+        
+        <!-- Search & Filter Controls -->
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-3 items-center justify-between">
+          
+          <!-- Product Search Input -->
+          <div class="relative w-full sm:w-72">
+            <i class="ph-bold ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+            <input type="text" id="pos-search" oninput="renderPOSProducts()" placeholder="Search item or scan barcode..." 
+              class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow text-sm font-medium">
+          </div>
+
+          <!-- Category Pills -->
+          <div class="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0" id="category-pills">
+            <!-- Dynamic Category Pills Rendered JS -->
+          </div>
+        </div>
+
+        <!-- Quick Barcode Entry Simulator -->
+        <div class="bg-slate-900 text-slate-300 p-2.5 rounded-xl flex items-center justify-between text-xs px-4 border border-slate-800">
+          <div class="flex items-center gap-2">
+            <i class="ph-bold ph-barcode text-brand-yellow text-base"></i>
+            <span>Quick Barcode Sim:</span>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="simulateBarcode('480001600001')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-1 rounded border border-slate-700">Bear Brand</button>
+            <button onclick="simulateBarcode('480001600002')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-1 rounded border border-slate-700">Pancit Canton</button>
+            <button onclick="simulateBarcode('480001600006')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-1 rounded border border-slate-700">Coke 1.5L</button>
+          </div>
+        </div>
+
+        <!-- Product Grid -->
+        <div id="pos-product-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 max-h-[620px] overflow-y-auto pr-1">
+          <!-- Dynamically populated via JS -->
+        </div>
+      </div>
+
+      <!-- Right: Active Cart / Order Sidebar (lg:col-span-5 or 4) -->
+      <div class="lg:col-span-5 xl:col-span-4 bg-white rounded-2xl shadow-lg border border-slate-200 flex flex-col h-[calc(100vh-140px)] sticky top-20">
+        
+        <!-- Cart Header -->
+        <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-2xl">
+          <div class="flex items-center gap-2">
+            <div class="p-2 bg-brand-yellow/20 text-slate-900 rounded-lg">
+              <i class="ph-bold ph-receipt text-xl text-brand-orange"></i>
+            </div>
+            <div>
+              <h2 class="font-heading font-bold text-slate-800 text-base">Current Order</h2>
+              <span class="text-xs text-slate-500" id="cart-item-count">0 items</span>
+            </div>
+          </div>
+          <button onclick="clearCart()" class="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1">
+            <i class="ph-bold ph-trash"></i> Clear
+          </button>
+        </div>
+
+        <!-- Cart Items List -->
+        <div id="cart-items-container" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+          <!-- Dynamically populated via JS -->
+        </div>
+
+        <!-- Checkout Controls -->
+        <div class="p-4 border-t border-slate-200 bg-slate-50/80 rounded-b-2xl space-y-3">
+          
+          <!-- Total Price display -->
+          <div class="flex justify-between items-baseline py-1">
+            <span class="text-sm font-semibold text-slate-500">Total Amount</span>
+            <span class="font-heading font-black text-2xl text-slate-900" id="cart-total">₱0.00</span>
+          </div>
+
+          <!-- Payment Mode Selection (Tabs) -->
+          <div class="grid grid-cols-2 gap-2 p-1 bg-slate-200/70 rounded-xl text-xs font-bold">
+            <button id="pay-mode-cash-btn" onclick="setPaymentMode('cash')" class="py-2 rounded-lg bg-white text-slate-900 shadow-sm flex items-center justify-center gap-1.5">
+              <i class="ph-bold ph-money text-emerald-600 text-sm"></i> Cash
+            </button>
+            <button id="pay-mode-pautang-btn" onclick="setPaymentMode('pautang')" class="py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5">
+              <i class="ph-bold ph-notebook text-amber-600 text-sm"></i> Charge Pautang
+            </button>
+          </div>
+
+          <!-- CASH PAYMENT SECTION -->
+          <div id="cash-payment-section" class="space-y-2">
+            <div class="flex items-center gap-2">
+              <label class="text-xs font-semibold text-slate-600 w-24">Cash Tendered:</label>
+              <div class="relative flex-1">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm">₱</span>
+                <input type="number" id="cash-tendered" oninput="calculateChange()" placeholder="0.00" 
+                  class="w-full pl-7 pr-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-800 text-sm">
+              </div>
+            </div>
+            
+            <!-- Quick Cash Bills Buttons -->
+            <div class="flex gap-1.5 pt-1">
+              <button onclick="setQuickCash(20)" class="flex-1 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded text-xs font-semibold text-slate-700">₱20</button>
+              <button onclick="setQuickCash(50)" class="flex-1 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded text-xs font-semibold text-slate-700">₱50</button>
+              <button onclick="setQuickCash(100)" class="flex-1 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded text-xs font-semibold text-slate-700">₱100</button>
+              <button onclick="setQuickCash(500)" class="flex-1 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded text-xs font-semibold text-slate-700">₱500</button>
+              <button onclick="setExactCash()" class="flex-1 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded text-xs font-bold">Exact</button>
+            </div>
+
+            <!-- Change Display -->
+            <div class="flex justify-between items-center pt-2 text-sm border-t border-slate-200/80">
+              <span class="text-slate-600 font-semibold">Change:</span>
+              <span class="font-heading font-extrabold text-base text-emerald-600" id="cart-change">₱0.00</span>
+            </div>
+          </div>
+
+          <!-- PAUTANG PAYMENT SECTION -->
+          <div id="pautang-payment-section" class="hidden space-y-2">
+            <label class="block text-xs font-semibold text-slate-600">Select Debtor / Customer:</label>
+            <div class="flex gap-2">
+              <select id="pautang-customer-select" class="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                <!-- Dynamically populated -->
+              </select>
+              <button onclick="openModal('add-customer-modal')" class="px-2.5 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-xs font-bold transition-colors">
+                + New
+              </button>
+            </div>
+            <p class="text-[11px] text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-200/60">
+              <i class="ph-bold ph-info text-xs"></i> Transaction will be added to customer's balance.
+            </p>
+          </div>
+
+          <!-- Checkout Button -->
+          <button onclick="processCheckout()" id="checkout-btn" disabled class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 text-white rounded-xl font-heading font-bold text-base shadow-md transition-all flex items-center justify-center gap-2">
+            <i class="ph-bold ph-check-circle text-lg"></i> Complete Sale
+          </button>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ==================== DEDICATED SALES & TRANSACTION HISTORY TAB ==================== -->
+    <section id="tab-history" class="tab-content hidden flex-col gap-6">
+      
+      <!-- History Search & Filter Controls -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex flex-col sm:flex-row gap-3 flex-1 max-w-xl">
+          <div class="relative flex-1">
+            <i class="ph-bold ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="history-search" oninput="renderHistoryTable()" placeholder="Search receipt ID, customer, or items..." 
+              class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-yellow">
+          </div>
+          <select id="history-filter-payment" onchange="renderHistoryTable()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-yellow">
+            <option value="all">All Payment Modes</option>
+            <option value="Cash">Cash Only</option>
+            <option value="Pautang">Pautang Only</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
+          <span id="history-total-count">0 Transactions</span>
+        </div>
+      </div>
+
+      <!-- History Log Table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 text-xs uppercase tracking-wider">
+                <th class="p-4">Receipt ID</th>
+                <th class="p-4">Date & Time</th>
+                <th class="p-4">Payment Method</th>
+                <th class="p-4 text-center">Items Count</th>
+                <th class="p-4 text-right">Total Amount</th>
+                <th class="p-4 text-right">Net Profit</th>
+                <th class="p-4 text-center">Status</th>
+                <th class="p-4 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="history-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium">
+              <!-- Dynamically Populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==================== INVENTORY TAB ==================== -->
+    <section id="tab-inventory" class="tab-content hidden flex-col gap-6">
+      
+      <!-- Inventory Header Actions -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex flex-col sm:flex-row gap-3 flex-1 max-w-xl">
+          <!-- Search -->
+          <div class="relative flex-1">
+            <i class="ph-bold ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="inventory-search" oninput="renderInventoryTable()" placeholder="Search products by name or barcode..." 
+              class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-yellow">
+          </div>
+          <!-- Filter Stock Status -->
+          <select id="inventory-filter-status" onchange="renderInventoryTable()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-yellow">
+            <option value="all">All Items</option>
+            <option value="low">Low Stock (&lt; 10)</option>
+            <option value="out">Out of Stock</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="openAddProductModal()" class="px-4 py-2 bg-brand-yellow hover:bg-yellow-400 text-slate-900 rounded-xl font-bold text-sm shadow-sm transition-colors flex items-center gap-2">
+            <i class="ph-bold ph-plus-circle text-lg"></i> Add New Item
+          </button>
+        </div>
+      </div>
+
+      <!-- Inventory Table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 text-xs uppercase tracking-wider">
+                <th class="p-4">Product Name</th>
+                <th class="p-4">Category</th>
+                <th class="p-4 text-right">Capital Cost</th>
+                <th class="p-4 text-right">Selling Price</th>
+                <th class="p-4 text-right">Profit / Unit</th>
+                <th class="p-4 text-center">Stock Quantity</th>
+                <th class="p-4 text-center">Status</th>
+                <th class="p-4 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="inventory-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium">
+              <!-- Dynamically Populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==================== PAUTANG / DEBT TRACKER TAB ==================== -->
+    <section id="tab-pautang" class="tab-content hidden flex-col gap-6">
+      
+      <!-- Top Bar -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="relative w-full sm:w-80">
+          <i class="ph-bold ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input type="text" id="pautang-search" oninput="renderPautangList()" placeholder="Search customer name..." 
+            class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500">
+        </div>
+        <button onclick="openModal('add-customer-modal')" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-sm shadow-sm transition-colors flex items-center gap-2">
+          <i class="ph-bold ph-user-plus text-lg"></i> Add New Customer
+        </button>
+      </div>
+
+      <!-- Customer Cards Grid -->
+      <div id="pautang-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Dynamically Populated -->
+      </div>
+
+    </section>
+
+    <!-- ==================== REPORTS & ANALYTICS TAB ==================== -->
+    <section id="tab-analytics" class="tab-content hidden flex-col gap-6">
+      
+      <!-- Metrics Dashboard Header Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
+          <div class="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
+            <i class="ph-bold ph-currency-circle-dollar text-2xl"></i>
+          </div>
+          <div>
+            <span class="block text-xs font-semibold text-slate-500">Gross Sales Today</span>
+            <span class="font-heading font-extrabold text-xl text-slate-900" id="analytics-gross-today">₱0.00</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
+          <div class="p-3 bg-blue-100 text-blue-600 rounded-xl">
+            <i class="ph-bold ph-trend-up text-2xl"></i>
+          </div>
+          <div>
+            <span class="block text-xs font-semibold text-slate-500">Est. Net Profit Today</span>
+            <span class="font-heading font-extrabold text-xl text-emerald-600" id="analytics-profit-today">₱0.00</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
+          <div class="p-3 bg-amber-100 text-amber-600 rounded-xl">
+            <i class="ph-bold ph-notebook text-2xl"></i>
+          </div>
+          <div>
+            <span class="block text-xs font-semibold text-slate-500">Total Unpaid Pautang</span>
+            <span class="font-heading font-extrabold text-xl text-amber-600" id="analytics-total-pautang">₱0.00</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
+          <div class="p-3 bg-purple-100 text-purple-600 rounded-xl">
+            <i class="ph-bold ph-shopping-bag-open text-2xl"></i>
+          </div>
+          <div>
+            <span class="block text-xs font-semibold text-slate-500">Items Sold Today</span>
+            <span class="font-heading font-extrabold text-xl text-slate-900" id="analytics-items-sold">0</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sales Log & Top Selling Items Split -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Sales Log Table (col 7) -->
+        <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col gap-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="font-heading font-bold text-slate-800 text-base flex items-center gap-2">
+              <i class="ph-bold ph-list-bullets text-brand-orange"></i> Recent Sales Overview
+            </h3>
+            <button onclick="switchTab('history')" class="text-xs text-brand-teal hover:underline font-bold">View Full History</button>
+          </div>
+          <div class="overflow-x-auto max-h-[400px]">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase">
+                  <th class="p-2.5">Date/Time</th>
+                  <th class="p-2.5">Items</th>
+                  <th class="p-2.5">Payment</th>
+                  <th class="p-2.5 text-right">Total</th>
+                  <th class="p-2.5 text-right">Profit</th>
+                </tr>
+              </thead>
+              <tbody id="sales-log-tbody" class="divide-y divide-slate-100">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Top Selling Items Chart Box (col 5) -->
+        <div class="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col gap-3">
+  <!-- 6. Receipt Details / Review Modal -->
+  <div id="receipt-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border border-slate-100 relative animate-in fade-in zoom-in duration-150">
+      <button onclick="closeModal('receipt-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl font-bold">
+        <i class="ph-bold ph-x"></i>
+      </button>
+
+      <div class="text-center border-b border-dashed border-slate-200 pb-4 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-brand-yellow/20 text-brand-orange flex items-center justify-center font-extrabold text-xl mx-auto mb-2">
+          <i class="ph-bold ph-storefront"></i>
+        </div>
+        <h3 class="font-heading font-bold text-lg text-slate-900">Tindahan Official Receipt</h3>
+        <p class="text-xs text-slate-400" id="receipt-modal-id">#S0000000</p>
+        <p class="text-[11px] text-slate-500" id="receipt-modal-date">Oct 21, 2026, 12:00 PM</p>
+      </div>
+
+      <div class="space-y-3 mb-4">
+        <div class="flex justify-between text-xs text-slate-600">
+          <span>Payment Method:</span>
+          <span class="font-bold text-slate-800" id="receipt-modal-payment">Cash</span>
+        </div>
+        <div class="flex justify-between text-xs text-slate-600">
+          <span>Customer:</span>
+          <span class="font-bold text-slate-800" id="receipt-modal-customer">Walk-in</span>
+        </div>
+      </div>
+
+      <div class="border-t border-b border-slate-100 py-3 mb-4 max-h-48 overflow-y-auto space-y-2" id="receipt-modal-items">
+        <!-- Dynamically populated line items -->
+      </div>
+
+      <div class="space-y-1.5 text-xs text-slate-600 mb-6">
+        <div class="flex justify-between">
+          <span>Subtotal</span>
+          <span class="font-semibold text-slate-800" id="receipt-modal-subtotal">₱0.00</span>
+        </div>
+        <div class="flex justify-between text-sm font-bold text-slate-900 pt-1 border-t border-slate-100">
+          <span>Total Paid</span>
+          <span class="font-heading text-emerald-600 text-base" id="receipt-modal-total">₱0.00</span>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="printCurrentReceipt()" class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2">
+          <i class="ph-bold ph-printer text-base"></i> Print / Save
+        </button>
+        <button id="void-receipt-btn" onclick="voidTransaction()" class="px-4 py-2.5 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5">
+          <i class="ph-bold ph-prohibit text-base"></i> Void
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    let currentReceipt = null;
+
+    // TAB SWITCHING
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-brand-yellow', 'text-slate-900', 'font-bold', 'shadow-sm');
+        btn.classList.add('text-slate-300');
+      });
+
+      const targetTab = document.getElementById(`tab-${tabName}`);
+      const targetBtn = document.getElementById(`tab-btn-${tabName}`);
+
+      if (targetTab && targetBtn) {
+        targetTab.classList.remove('hidden');
+        if (tabName === 'inventory' || tabName === 'pautang' || tabName === 'analytics' || tabName === 'history') {
+          targetTab.classList.add('flex');
+        }
+        targetBtn.classList.add('bg-brand-yellow', 'text-slate-900', 'font-bold', 'shadow-sm');
+        targetBtn.classList.remove('text-slate-300');
+      }
+
+      if (tabName === 'history') {
+        renderHistoryTable();
+      }
+
+      if (tabName === 'analytics') {
+        renderAnalytics();
+      }
+    }
+
+    // ================= TRANSACTION HISTORY FUNCTIONS =================
+
+    function renderHistoryTable() {
+      const search = document.getElementById('history-search').value.toLowerCase().trim();
+      const filterPayment = document.getElementById('history-filter-payment').value;
+      const tbody = document.getElementById('history-tbody');
+      const countEl = document.getElementById('history-total-count');
+
+      const filtered = salesHistory.filter(s => {
+        const matchesSearch = s.id.toLowerCase().includes(search) ||
+          s.items.toLowerCase().includes(search) ||
+          s.paymentMethod.toLowerCase().includes(search);
+        
+        let matchesPayment = true;
+        if (filterPayment === 'Cash') matchesPayment = s.paymentMethod.startsWith('Cash');
+        if (filterPayment === 'Pautang') matchesPayment = s.paymentMethod.startsWith('Pautang');
+
+        return matchesSearch && matchesPayment;
+      });
+
+      countEl.textContent = `${filtered.length} Transactions`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">No transaction records found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(s => {
+        const itemCount = s.itemDetails ? s.itemDetails.reduce((a, b) => a + b.qty, 0) : 0;
+        const isVoided = s.isVoided;
+
+        return `
+          <tr class="hover:bg-slate-50 transition-colors ${isVoided ? 'bg-rose-50/50 opacity-60' : ''}">
+            <td class="p-4 font-mono text-xs font-bold text-slate-800">${s.id}</td>
+            <td class="p-4 text-xs text-slate-500">${s.date}</td>
+            <td class="p-4">
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold ${s.paymentMethod.startsWith('Cash') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                ${s.paymentMethod}
+              </span>
+            </td>
+            <td class="p-4 text-center font-bold text-slate-700">${itemCount}</td>
+            <td class="p-4 text-right font-extrabold text-slate-900">₱${s.total.toFixed(2)}</td>
+            <td class="p-4 text-right font-bold text-emerald-600">+₱${s.profit.toFixed(2)}</td>
+            <td class="p-4 text-center">
+              ${isVoided ? '<span class="px-2 py-0.5 bg-rose-200 text-rose-800 rounded text-[10px] font-bold">VOIDED</span>' : '<span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold">COMPLETED</span>'}
+            </td>
+            <td class="p-4 text-center">
+              <button onclick="viewReceiptDetails('${s.id}')" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1 mx-auto">
+                <i class="ph-bold ph-eye"></i> Receipt
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function viewReceiptDetails(saleId) {
+      const sale = salesHistory.find(s => s.id === saleId);
+      if (!sale) return;
+
+      currentReceipt = sale;
+      document.getElementById('receipt-modal-id').textContent = `#${sale.id}`;
+      document.getElementById('receipt-modal-date').textContent = sale.date;
+      document.getElementById('receipt-modal-payment').textContent = sale.paymentMethod;
+      document.getElementById('receipt-modal-customer').textContent = sale.paymentMethod.startsWith('Pautang') ? sale.paymentMethod.replace('Pautang (', '').replace(')', '') : 'Walk-in Cash Customer';
+      document.getElementById('receipt-modal-subtotal').textContent = `₱${sale.total.toFixed(2)}`;
+      document.getElementById('receipt-modal-total').textContent = `₱${sale.total.toFixed(2)}`;
+
+      const itemsContainer = document.getElementById('receipt-modal-items');
+      itemsContainer.innerHTML = sale.itemDetails.map(item => `
+        <div class="flex justify-between items-center text-xs">
+          <div>
+            <div class="font-bold text-slate-800">${item.name}</div>
+            <div class="text-[10px] text-slate-400">₱${item.price.toFixed(2)} × ${item.qty}</div>
+          </div>
+          <span class="font-bold text-slate-900">₱${(item.price * item.qty).toFixed(2)}</span>
+        </div>
+      `).join('');
+
+      const voidBtn = document.getElementById('void-receipt-btn');
+      if (sale.isVoided) {
+        voidBtn.disabled = true;
+        voidBtn.className = 'px-4 py-2.5 bg-slate-200 text-slate-400 rounded-xl text-xs font-bold cursor-not-allowed';
+      } else {
+        voidBtn.disabled = false;
+        voidBtn.className = 'px-4 py-2.5 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5';
+      }
+
+      openModal('receipt-modal');
+    }
+
+    function printCurrentReceipt() {
+      if (!currentReceipt) return;
+      window.print();
+    }
+
+    function voidTransaction() {
+      if (!currentReceipt || currentReceipt.isVoided) return;
+
+      if (confirm(`Are you sure you want to VOID receipt #${currentReceipt.id}? This will restore the inventory stock.`)) {
+        // Restore stock
+        currentReceipt.itemDetails.forEach(item => {
+          const prod = products.find(p => p.id === item.id);
+          if (prod) {
+            prod.stock += item.qty;
+          }
+        });
+
+        // Deduct Pautang balance if charged
+        if (currentReceipt.paymentMethod.startsWith('Pautang')) {
+          const custName = currentReceipt.paymentMethod.replace('Pautang (', '').replace(')', '');
+          const cust = customers.find(c => c.name === custName);
+          if (cust) {
+            cust.totalDebt = Math.max(0, cust.totalDebt - currentReceipt.total);
+            cust.history.unshift({
+              date: new Date().toLocaleString(),
+              item: `Voided Sale #${currentReceipt.id}`,
+              amount: -currentReceipt.total,
+              type: 'payment'
+            });
+          }
+        }
+
+        currentReceipt.isVoided = true;
+        saveProductsState();
+        saveCustomersState();
+        saveSalesState();
+
+        closeModal('receipt-modal');
+        renderHistoryTable();
+        renderPOSProducts();
+        renderInventoryTable();
+        renderPautangList();
+        updateMetrics();
+        alert('Transaction voided successfully and inventory restored.');
+      }
+    }
+
+    // ================= POS FUNCTIONS =================
+
+    function renderCategoryPills() {
+      const categories = ['All', 'Snacks', 'Drinks', 'Noodles', 'Canned Goods', 'Toiletries', 'Ingredients', 'Load'];
+      const container = document.getElementById('category-pills');
+      container.innerHTML = categories.map(cat => `
+        <button onclick="filterCategory('${cat}')" class="px-3 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+          selectedCategory === cat ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+        }">
+          ${cat}
+        </button>
+      `).join('');
+    }
+
+    function filterCategory(cat) {
+      selectedCategory = cat;
+      renderCategoryPills();
+      renderPOSProducts();
+    }
+
+    function renderPOSProducts() {
+      const search = document.getElementById('pos-search').value.toLowerCase().trim();
+      const grid = document.getElementById('pos-product-grid');
+
+      const filtered = products.filter(p => {
+        const matchesCat = selectedCategory === 'All' || p.category === selectedCategory;
+        const matchesSearch = p.name.toLowerCase().includes(search) || (p.barcode && p.barcode.includes(search));
+        return matchesCat && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-12 text-center text-slate-400">
+            <i class="ph-bold ph-package-x text-4xl mb-2"></i>
+            <p class="text-sm font-medium">No products found</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(p => {
+        const catMeta = categoryIcons[p.category] || { icon: 'ph-tag', color: 'bg-slate-100 text-slate-700' };
+        const isOutOfStock = p.stock <= 0;
+        const isLowStock = p.stock > 0 && p.stock < 10;
+
+        return `
+          <div onclick="${isOutOfStock ? '' : `addToCart('${p.id}')`}" class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between cursor-pointer select-none relative ${isOutOfStock ? 'opacity-50 pointer-events-none' : 'hover:border-brand-yellow'}">
+            
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${catMeta.color} flex items-center gap-1">
+                  <i class="ph-bold ${catMeta.icon}"></i> ${p.category}
+                </span>
+                <span class="text-[10px] font-bold ${isOutOfStock ? 'text-rose-600' : isLowStock ? 'text-amber-600' : 'text-slate-400'}">
+                  Stock: ${p.stock}
+                </span>
+              </div>
+              
+              <h4 class="font-bold text-slate-800 text-xs sm:text-sm line-clamp-2 leading-snug mb-2">${p.name}</h4>
+            </div>
+
+            <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
+              <span class="font-heading font-extrabold text-sm sm:text-base text-slate-900">₱${p.price.toFixed(2)}</span>
+              <button class="w-7 h-7 rounded-lg bg-brand-yellow hover:bg-yellow-400 text-slate-900 flex items-center justify-center font-bold text-base shadow-sm">
+                +
+              </button>
+            </div>
+
+          </div>
+        `;
+      }).join('');
+    }
+
+    function simulateBarcode(code) {
+      document.getElementById('pos-search').value = code;
+      renderPOSProducts();
+      const product = products.find(p => p.barcode === code);
+      if (product && product.stock > 0) {
+        addToCart(product.id);
+      }
+    }
+
+    function addToCart(productId) {
+      const product = products.find(p => p.id === productId);
+      if (!product || product.stock <= 0) return;
+
+      const existing = cart.find(item => item.id === productId);
+      if (existing) {
+        if (existing.qty < product.stock) {
+          existing.qty += 1;
+        } else {
+          alert(`Cannot add more. Stock limit (${product.stock}) reached.`);
+        }
+      } else {
+        cart.push({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          cost: product.cost,
+          qty: 1
+        });
+      }
+      renderCart();
+    }
+
+    function updateCartQty(productId, delta) {
+      const item = cart.find(i => i.id === productId);
+      const product = products.find(p => p.id === productId);
+      if (!item) return;
+
+      item.qty += delta;
+      if (item.qty > product.stock) {
+        item.qty = product.stock;
+        alert(`Cannot exceed available stock of ${product.stock}`);
+      }
+      if (item.qty <= 0) {
+        cart = cart.filter(i => i.id !== productId);
+      }
+      renderCart();
+    }
+
+    function removeFromCart(productId) {
+      cart = cart.filter(i => i.id !== productId);
+      renderCart();
+    }
+
+    function clearCart() {
+      cart = [];
+      renderCart();
+    }
+
+    function renderCart() {
+      const container = document.getElementById('cart-items-container');
+      const countEl = document.getElementById('cart-item-count');
+      const totalEl = document.getElementById('cart-total');
+      const checkoutBtn = document.getElementById('checkout-btn');
+
+      const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+      const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+      countEl.textContent = `${totalItems} items`;
+      totalEl.textContent = `₱${totalPrice.toFixed(2)}`;
+
+      if (cart.length === 0) {
+        container.innerHTML = `
+          <div class="h-full flex flex-col items-center justify-center text-slate-400 py-12">
+            <i class="ph-bold ph-shopping-cart-simple text-4xl mb-2 text-slate-300"></i>
+            <p class="text-xs font-semibold">Cart is empty</p>
+            <span class="text-[11px] text-slate-400">Click items on the left to add</span>
+          </div>`;
+        checkoutBtn.disabled = true;
+      } else {
+        container.innerHTML = cart.map(item => `
+          <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200/80">
+            <div class="flex-1 pr-2">
+              <h5 class="text-xs font-bold text-slate-800 line-clamp-1">${item.name}</h5>
+              <span class="text-[11px] font-semibold text-slate-500">₱${item.price.toFixed(2)} each</span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <div class="flex items-center bg-white border border-slate-300 rounded-lg p-0.5">
+                <button onclick="updateCartQty('${item.id}', -1)" class="w-6 h-6 rounded flex items-center justify-center text-xs font-bold hover:bg-slate-100 text-slate-600">-</button>
+                <span class="w-6 text-center text-xs font-bold text-slate-800">${item.qty}</span>
+                <button onclick="updateCartQty('${item.id}', 1)" class="w-6 h-6 rounded flex items-center justify-center text-xs font-bold hover:bg-slate-100 text-slate-600">+</button>
+              </div>
+              <span class="text-xs font-extrabold text-slate-900 w-14 text-right">₱${(item.price * item.qty).toFixed(2)}</span>
+              <button onclick="removeFromCart('${item.id}')" class="text-rose-500 hover:text-rose-700 p-1">
+                <i class="ph-bold ph-x text-sm"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+        checkoutBtn.disabled = false;
+      }
+
+      calculateChange();
+    }
+
+    function setPaymentMode(mode) {
+      paymentMode = mode;
+      const cashBtn = document.getElementById('pay-mode-cash-btn');
+      const pautangBtn = document.getElementById('pay-mode-pautang-btn');
+      const cashSec = document.getElementById('cash-payment-section');
+      const pautangSec = document.getElementById('pautang-payment-section');
+
+      if (mode === 'cash') {
+        cashBtn.className = 'py-2 rounded-lg bg-white text-slate-900 shadow-sm flex items-center justify-center gap-1.5';
+        pautangBtn.className = 'py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5';
+        cashSec.classList.remove('hidden');
+        pautangSec.classList.add('hidden');
+      } else {
+        pautangBtn.className = 'py-2 rounded-lg bg-white text-slate-900 shadow-sm flex items-center justify-center gap-1.5';
+        cashBtn.className = 'py-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5';
+        pautangSec.classList.remove('hidden');
+        cashSec.classList.add('hidden');
+      }
+    }
+
+    function setQuickCash(amount) {
+      document.getElementById('cash-tendered').value = amount;
+      calculateChange();
+    }
+
+    function setExactCash() {
+      const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      document.getElementById('cash-tendered').value = totalPrice.toFixed(2);
+      calculateChange();
+    }
+
+    function calculateChange() {
+      const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const cashTendered = parseFloat(document.getElementById('cash-tendered').value) || 0;
+      const changeEl = document.getElementById('cart-change');
+      const change = cashTendered - totalPrice;
+
+      if (change >= 0) {
+        changeEl.textContent = `₱${change.toFixed(2)}`;
+        changeEl.classList.remove('text-rose-600');
+        changeEl.classList.add('text-emerald-600');
+      } else {
+        changeEl.textContent = `₱${change.toFixed(2)}`;
+        changeEl.classList.remove('text-emerald-600');
+        changeEl.classList.add('text-rose-600');
+      }
+    }
+
+    function processCheckout() {
+      if (cart.length === 0) return;
+
+      const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const totalCost = cart.reduce((sum, item) => sum + (item.cost * item.qty), 0);
+      const profit = totalPrice - totalCost;
+
+      if (paymentMode === 'cash') {
+        const cashTendered = parseFloat(document.getElementById('cash-tendered').value) || 0;
+        if (cashTendered < totalPrice) {
+          alert('Insufficient cash tendered!');
+          return;
+        }
+      }
+
+      let customerName = 'Cash Customer';
+      if (paymentMode === 'pautang') {
+        const custId = document.getElementById('pautang-customer-select').value;
+        const customer = customers.find(c => c.id === custId);
+        if (!customer) {
+          alert('Please select a customer for Pautang!');
+          return;
+        }
+        customerName = customer.name;
+        customer.totalDebt += totalPrice;
+        customer.history.unshift({
+          date: new Date().toLocaleString(),
+          item: cart.map(i => `${i.name} x${i.qty}`).join(', '),
+          amount: totalPrice,
+          type: 'charge'
+        });
+        saveCustomersState();
+      }
+
+      // Deduct Stock
+      cart.forEach(cartItem => {
+        const prod = products.find(p => p.id === cartItem.id);
+        if (prod) {
+          prod.stock -= cartItem.qty;
+        }
+      });
+      saveProductsState();
+
+      // Record Sale Log
+      const saleRecord = {
+        id: 'S' + Date.now(),
+        date: new Date().toLocaleString(),
+        items: cart.map(i => `${i.name} (${i.qty})`).join(', '),
+        paymentMethod: paymentMode === 'cash' ? 'Cash' : `Pautang (${customerName})`,
+        total: totalPrice,
+        profit: profit,
+        itemDetails: [...cart]
+      };
+      salesHistory.unshift(saleRecord);
+      saveSalesState();
+
+      // UI Reset
+      alert(`Sale completed successfully! ${paymentMode === 'cash' ? 'Change: ' + document.getElementById('cart-change').textContent : 'Charged to ' + customerName}`);
+      cart = [];
+      document.getElementById('cash-tendered').value = '';
+      renderCart();
+      renderPOSProducts();
+      renderInventoryTable();
+      renderPautangList();
+      updateMetrics();
+    }
+
+    // ================= INVENTORY FUNCTIONS =================
+
+    function renderInventoryTable() {
+      const search = document.getElementById('inventory-search').value.toLowerCase().trim();
+      const filterStatus = document.getElementById('inventory-filter-status').value;
+      const tbody = document.getElementById('inventory-tbody');
+
+      const filtered = products.filter(p => {
+        const matchesSearch = p.name.toLowerCase().includes(search) || (p.barcode && p.barcode.includes(search));
+        let matchesStatus = true;
+        if (filterStatus === 'low') matchesStatus = p.stock > 0 && p.stock < 10;
+        if (filterStatus === 'out') matchesStatus = p.stock <= 0;
+        return matchesSearch && matchesStatus;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">No items found in inventory.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(p => {
+        const profit = p.price - p.cost;
+        let statusBadge = '<span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">In Stock</span>';
+        if (p.stock <= 0) {
+          statusBadge = '<span class="px-2.5 py-1 bg-rose-100 text-rose-800 rounded-full text-xs font-bold">Out of Stock</span>';
+        } else if (p.stock < 10) {
+          statusBadge = '<span class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold badge-glow">Low Stock</span>';
+        }
+
+        return `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="p-4 font-bold text-slate-800">${p.name}</td>
+            <td class="p-4"><span class="bg-slate-100 text-slate-700 text-xs px-2 py-1 rounded-md font-semibold">${p.category}</span></td>
+            <td class="p-4 text-right">₱${p.cost.toFixed(2)}</td>
+            <td class="p-4 text-right font-bold">₱${p.price.toFixed(2)}</td>
+            <td class="p-4 text-right text-emerald-600 font-bold">+₱${profit.toFixed(2)}</td>
+            <td class="p-4 text-center font-extrabold text-slate-900">${p.stock}</td>
+            <td class="p-4 text-center">${statusBadge}</td>
+            <td class="p-4 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <button onclick="openRestockModal('${p.id}')" title="Stock In" class="p-1.5 bg-brand-teal/10 hover:bg-brand-teal text-brand-teal hover:text-white rounded-lg transition-colors font-bold text-xs flex items-center gap-1">
+                  <i class="ph-bold ph-plus"></i> Restock
+                </button>
+                <button onclick="openEditProductModal('${p.id}')" class="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg">
+                  <i class="ph-bold ph-pencil-simple text-base"></i>
+                </button>
+                <button onclick="deleteProduct('${p.id}')" class="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg">
+                  <i class="ph-bold ph-trash text-base"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openAddProductModal() {
+      document.getElementById('product-modal-title').textContent = 'Add New Product';
+      document.getElementById('prod-id').value = '';
+      document.getElementById('product-form').reset();
+      openModal('product-modal');
+    }
+
+    function openEditProductModal(id) {
+      const prod = products.find(p => p.id === id);
+      if (!prod) return;
+      document.getElementById('product-modal-title').textContent = 'Edit Product';
+      document.getElementById('prod-id').value = prod.id;
+      document.getElementById('prod-name').value = prod.name;
+      document.getElementById('prod-category').value = prod.category;
+      document.getElementById('prod-barcode').value = prod.barcode || '';
+      document.getElementById('prod-cost').value = prod.cost;
+      document.getElementById('prod-price').value = prod.price;
+      document.getElementById('prod-stock').value = prod.stock;
+      openModal('product-modal');
+    }
+
+    function saveProduct(e) {
+      e.preventDefault();
+      const id = document.getElementById('prod-id').value;
+      const name = document.getElementById('prod-name').value.trim();
+      const category = document.getElementById('prod-category').value;
+      const barcode = document.getElementById('prod-barcode').value.trim();
+      const cost = parseFloat(document.getElementById('prod-cost').value);
+      const price = parseFloat(document.getElementById('prod-price').value);
+      const stock = parseInt(document.getElementById('prod-stock').value);
+
+      if (id) {
+        // Edit
+        const prod = products.find(p => p.id === id);
+        if (prod) {
+          prod.name = name;
+          prod.category = category;
+          prod.barcode = barcode;
+          prod.cost = cost;
+          prod.price = price;
+          prod.stock = stock;
+        }
+      } else {
+        // Create
+        const newProd = {
+          id: 'P' + Date.now(),
+          barcode: barcode || ('4800000' + Math.floor(1000 + Math.random() * 9000)),
+          name,
+          category,
+          cost,
+          price,
+          stock
+        };
+        products.push(newProd);
+      }
+
+      saveProductsState();
+      closeModal('product-modal');
+      renderInventoryTable();
+      renderPOSProducts();
+      updateMetrics();
+    }
+
+    function deleteProduct(id) {
+      if (confirm('Are you sure you want to delete this product?')) {
+        products = products.filter(p => p.id !== id);
+        saveProductsState();
+        renderInventoryTable();
+        renderPOSProducts();
+        updateMetrics();
+      }
+    }
+
+    function openRestockModal(id) {
+      const prod = products.find(p => p.id === id);
+      if (!prod) return;
+      document.getElementById('restock-prod-id').value = prod.id;
+      document.getElementById('restock-prod-name').textContent = `${prod.name} (Current Stock: ${prod.stock})`;
+      openModal('restock-modal');
+    }
+
+    function saveRestock(e) {
+      e.preventDefault();
+      const id = document.getElementById('restock-prod-id').value;
+      const qty = parseInt(document.getElementById('restock-qty').value);
+      const prod = products.find(p => p.id === id);
+      if (prod && qty > 0) {
+        prod.stock += qty;
+        saveProductsState();
+        closeModal('restock-modal');
+        renderInventoryTable();
+        renderPOSProducts();
+        updateMetrics();
+      }
+    }
+
+    // ================= PAUTANG / DEBT TRACKER =================
+
+    function renderPautangList() {
+      const search = document.getElementById('pautang-search').value.toLowerCase().trim();
+      const grid = document.getElementById('pautang-cards-grid');
+
+      const filtered = customers.filter(c => c.name.toLowerCase().includes(search));
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center text-slate-400 py-12">No customers found.</div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(c => `
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between gap-4">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <h4 class="font-heading font-bold text-slate-900 text-base flex items-center gap-2">
+                <i class="ph-bold ph-user-circle text-amber-500 text-xl"></i> ${c.name}
+              </h4>
+              <span class="text-xs text-slate-400 font-medium">${c.phone || 'No Phone'}</span>
+            </div>
+            
+            <div class="bg-amber-50 border border-amber-200/80 rounded-xl p-3 mt-3 flex items-center justify-between">
+              <span class="text-xs font-semibold text-amber-800">Unpaid Balance:</span>
+              <span class="font-heading font-extrabold text-xl ${c.totalDebt > 0 ? 'text-amber-600' : 'text-emerald-600'}">
+                ₱${c.totalDebt.toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+          <div class="flex gap-2 border-t border-slate-100 pt-3">
+            <button onclick="openPayPautangModal('${c.id}')" ${c.totalDebt <= 0 ? 'disabled' : ''} class="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl text-xs font-bold transition-colors shadow-sm flex items-center justify-center gap-1">
+              <i class="ph-bold ph-hand-coins"></i> Pay Balance
+            </button>
+            <button onclick="openCustomerHistory('${c.id}')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors">
+              History
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function populatePautangCustomerSelect() {
+      const select = document.getElementById('pautang-customer-select');
+      select.innerHTML = customers.map(c => `
+        <option value="${c.id}">${c.name} (Debt: ₱${c.totalDebt.toFixed(2)})</option>
+      `).join('');
+    }
+
+    function saveCustomer(e) {
+      e.preventDefault();
+      const name = document.getElementById('cust-name').value.trim();
+      const phone = document.getElementById('cust-phone').value.trim();
+
+      const newCust = {
+        id: 'c' + Date.now(),
+        name,
+        phone,
+        totalDebt: 0.00,
+        history: []
+      };
+
+      customers.push(newCust);
+      saveCustomersState();
+      closeModal('add-customer-modal');
+      renderPautangList();
+      populatePautangCustomerSelect();
+      document.getElementById('cust-name').value = '';
+      document.getElementById('cust-phone').value = '';
+    }
+
+    function openPayPautangModal(custId) {
+      const cust = customers.find(c => c.id === custId);
+      if (!cust) return;
+      document.getElementById('pay-pautang-cust-id').value = cust.id;
+      document.getElementById('pay-pautang-cust-name').textContent = cust.name;
+      document.getElementById('pay-pautang-current-balance').textContent = `₱${cust.totalDebt.toFixed(2)}`;
+      document.getElementById('pay-pautang-amount').value = cust.totalDebt;
+      openModal('pay-pautang-modal');
+    }
+
+    function savePautangPayment(e) {
+      e.preventDefault();
+      const custId = document.getElementById('pay-pautang-cust-id').value;
+      const amountPaid = parseFloat(document.getElementById('pay-pautang-amount').value) || 0;
+      const cust = customers.find(c => c.id === custId);
+
+      if (cust && amountPaid > 0) {
+        cust.totalDebt = Math.max(0, cust.totalDebt - amountPaid);
+        cust.history.unshift({
+          date: new Date().toLocaleString(),
+          item: 'Cash Debt Payment',
+          amount: -amountPaid,
+          type: 'payment'
+        });
+
+        saveCustomersState();
+        closeModal('pay-pautang-modal');
+        renderPautangList();
+        populatePautangCustomerSelect();
+        updateMetrics();
+        alert(`Recorded payment of ₱${amountPaid.toFixed(2)} for ${cust.name}`);
+      }
+    }
+
+    function openCustomerHistory(custId) {
+      const cust = customers.find(c => c.id === custId);
+      if (!cust) return;
+
+      document.getElementById('history-cust-name').textContent = cust.name;
+      document.getElementById('history-cust-phone').textContent = cust.phone ? `Phone: ${cust.phone}` : 'No phone recorded';
+
+      const container = document.getElementById('history-list-container');
+      if (cust.history.length === 0) {
+        container.innerHTML = `<div class="text-center text-slate-400 py-6 text-xs">No transaction history found.</div>`;
+      } else {
+        container.innerHTML = cust.history.map(h => `
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs flex justify-between items-center">
+            <div>
+              <div class="font-bold text-slate-800">${h.item}</div>
+              <div class="text-[10px] text-slate-400">${h.date}</div>
+            </div>
+            <span class="font-heading font-extrabold text-sm ${h.type === 'payment' ? 'text-emerald-600' : 'text-amber-600'}">
+              ${h.type === 'payment' ? '-' : '+'}₱${Math.abs(h.amount).toFixed(2)}
+            </span>
+          </div>
+        `).join('');
+      }
+
+      openModal('customer-history-modal');
+    }
+
+    // ================= REPORTS & ANALYTICS =================
+
+    function renderAnalytics() {
+      // Sales Log Table
+      const tbody = document.getElementById('sales-log-tbody');
+      if (salesHistory.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No sales recorded yet.</td></tr>`;
+      } else {
+        tbody.innerHTML = salesHistory.map(s => `
+          <tr class="hover:bg-slate-50">
+            <td class="p-2.5 text-slate-500">${s.date}</td>
+            <td class="p-2.5 font-bold text-slate-800">${s.items}</td>
+            <td class="p-2.5 font-semibold text-slate-600">${s.paymentMethod}</td>
+            <td class="p-2.5 text-right font-extrabold text-slate-900">₱${s.total.toFixed(2)}</td>
+            <td class="p-2.5 text-right font-bold text-emerald-600">+₱${s.profit.toFixed(2)}</td>
+          </tr>
+        `).join('');
+      }
+
+      updateTopItemsChart();
+    }
+
+    function initAnalyticsChart() {
+      const ctx = document.getElementById('topItemsChart').getContext('2d');
+      topChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['No Data'],
+          datasets: [{
+            label: 'Units Sold',
+            data: [0],
+            backgroundColor: '#00A896',
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } }
+          }
+        }
+      });
+    }
+
+    function updateTopItemsChart() {
+      if (!topChartInstance) return;
+
+      const itemSalesMap = {};
+      salesHistory.forEach(sale => {
+        if (sale.itemDetails) {
+          sale.itemDetails.forEach(item => {
+            itemSalesMap[item.name] = (itemSalesMap[item.name] || 0) + item.qty;
+          });
+        }
+      });
+
+      const sorted = Object.entries(itemSalesMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+      if (sorted.length === 0) {
+        topChartInstance.data.labels = ['No Sales Yet'];
+        topChartInstance.data.datasets[0].data = [0];
+      } else {
+        topChartInstance.data.labels = sorted.map(i => i[0]);
+        topChartInstance.data.datasets[0].data = sorted.map(i => i[1]);
+      }
+      topChartInstance.update();
+    }
+
+    function clearSalesHistory() {
+      if (confirm('Clear all sales history records?')) {
+        salesHistory = [];
+        saveSalesState();
+        renderAnalytics();
+        updateMetrics();
+      }
+    }
+
+    // ================= METRICS & LOCAL STORAGE =================
+
+    function updateMetrics() {
+      const totalSalesToday = salesHistory.reduce((sum, s) => sum + s.total, 0);
+      const totalProfitToday = salesHistory.reduce((sum, s) => sum + s.profit, 0);
+      const totalPautangUnpaid = customers.reduce((sum, c) => sum + c.totalDebt, 0);
+
+      let itemsSold = 0;
+      salesHistory.forEach(s => {
+        if (s.itemDetails) {
+          itemsSold += s.itemDetails.reduce((a, b) => a + b.qty, 0);
+        }
+      });
+
+      document.getElementById('header-sales-today').textContent = `₱${totalSalesToday.toFixed(2)}`;
+      document.getElementById('header-sales-today-mobile').textContent = `₱${totalSalesToday.toFixed(2)}`;
+      document.getElementById('analytics-gross-today').textContent = `₱${totalSalesToday.toFixed(2)}`;
+      document.getElementById('analytics-profit-today').textContent = `₱${totalProfitToday.toFixed(2)}`;
+      document.getElementById('analytics-total-pautang').textContent = `₱${totalPautangUnpaid.toFixed(2)}`;
+      document.getElementById('analytics-items-sold').textContent = itemsSold;
+
+      // Low stock count badge
+      const lowStockCount = products.filter(p => p.stock < 10).length;
+      const badge = document.getElementById('low-stock-count-badge');
+      if (lowStockCount > 0) {
+        badge.textContent = lowStockCount;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    function saveProductsState() {
+      localStorage.setItem('tindahan_products', JSON.stringify(products));
+    }
+
+    function saveCustomersState() {
+      localStorage.setItem('tindahan_customers', JSON.stringify(customers));
+    }
+
+    function saveSalesState() {
+      localStorage.setItem('tindahan_sales', JSON.stringify(salesHistory));
+    }
+
+    function confirmResetData() {
+      if (confirm('Reset system to default sample data? All custom additions will be cleared.')) {
+        localStorage.removeItem('tindahan_products');
+        localStorage.removeItem('tindahan_customers');
+        localStorage.removeItem('tindahan_sales');
+        location.reload();
+      }
+    }
+
+    // Modal Helpers
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
